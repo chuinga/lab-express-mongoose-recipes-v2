@@ -30,50 +30,71 @@ app.get('/', (req, res) => {
 
 //  Iteration 3 - Create a Recipe route
 //  POST  /recipes route
-app.post('/recipes', (request, response) => {
-    Recipe.create({
-        title: request.body.title,
-        instructions: request.body.instructions,
-        level: request.body.level,
-        ingredients: request.body.ingredients,
-        image: request.body.image,
-        duration: request.body.duration,
-        isArchived: request.body.isArchived,
-        created: request.body.created
-    })
-})
+app.post('/recipes', async (request, response) => {
+    const payload = request.body;
+    try {
+        const newRecipe = await Recipe.create(payload);
+        response.status(201).json(newRecipe)
+    } catch (error){
+        response.status(500).json({ error, message: 'Somethin happened maybe on the server'})
+    }
+});
 
 //  Iteration 4 - Get All Recipes
 //  GET  /recipes route
-app.get('/recipes', (request, response) => {
-    Recipe.find()
-    .then((allRecipes) => {
-        response.status(200).json(allRecipes);
-    })              
-    .catch((error) => {
-        response.status(500).json({ message: "Error while getting all recipes" });
-    });
-});
+app.get("/recipes", async (request, response) => {
+    try {
+      const recipes = await Recipe.find({});
+      response.status(200).json(recipes);
+    } catch (error) {
+        response.status(500).json({ error: "Error on getting all recipes" });
+    }
+  });
 
 //  Iteration 5 - Get a Single Recipe
 //  GET  /recipes/:id route
-app.get('/recipes/:id', (request, response) => {
-    Recipe.findById(req.params.id)
-    .then((recipe) => {
-        response.status(200).json(recipe);
-    })              
-    .catch((error) => {
-        response.status(500).json({ message: "Error while getting a single recipe" });
-    });
+app.get('/recipes/:id', async (request, response) => {
+    try {
+        const recipeId = request.params.id;
+        const oneRecipe = await Recipe.findById(recipeId);
+        if (!oneRecipe) {
+            return response.status(404).json({ message: "Recipe not found" });
+          }
+        response.status(200).json(oneRecipe);
+    } catch (error) {
+        response.status(500).json( {error, message: 'Error on getting recipe' })
+    }
 });
 
 //  Iteration 6 - Update a Single Recipe
 //  PUT  /recipes/:id route
-
+app.put("/recipes/:id", async (request, response) => {
+    const id = request.params.id;
+    const payload = request.body;
+    try {
+      const updatedRecipe = await Recipe.findByIdAndUpdate(id, payload, {
+        new: true,
+      });
+      response.status(200).json(updatedRecipe);
+    } catch (error) {
+        response.status(500).json({ error: "Error on updating recipe" });
+    }
+  });
 
 //  Iteration 7 - Delete a Single Recipe
 //  DELETE  /recipes/:id route
-
+app.delete('/recipes/:id', async (request, response) => {
+    try {
+        const recipeId = request.params.id;
+        const deletedRecipe = await Recipe.findByIdAndDelete(recipeId);
+        if (!deletedRecipe) {
+            return response.status(404).json({ message: "Recipe not found" });
+          }
+        response.status(204).send();
+    } catch (error) {
+        response.status(500).json( {error, message: 'Error on deleting recipe' })
+    }
+});
 
 
 // Start the server
